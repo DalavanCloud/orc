@@ -51,7 +51,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('baseUrl'),'/linked/orchestrator.json')]",
+                    "uri": "[uri(parameters('baseUrl'),'/linked/orchestrator.json')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -71,7 +71,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('baseUrl'),'/linked/container.json')]",
+                    "uri": "[uri(parameters('baseUrl'),'/linked/container.json')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
