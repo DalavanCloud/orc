@@ -4,7 +4,7 @@
     "parameters": {
         "baseUrl": {
             "type": "string",
-            "defaultValue": "[deployment().properties.templateLink.uri]"
+            "defaultValue": "https://raw.githubusercontent.com/marcvaneijk/orc/master/ubuntu1804"
         },
         "location": {
             "type": "string",
@@ -51,7 +51,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[uri(parameters('baseUrl'),'/linked/orchestrator.json')]",
+                    "uri": "[concat(parameters('baseUrl'),'/linked/orchestrator.json')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -71,7 +71,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[uri(parameters('baseUrl'),'/linked/container.json')]",
+                    "uri": "[concat(parameters('baseUrl'),'/linked/container.json')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
