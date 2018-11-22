@@ -1,2 +1,2 @@
-arg1=$1
-echo $arg1
+echo "================== from containerlogic1.sh"
+echo $APPID
