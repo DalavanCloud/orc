@@ -32,13 +32,9 @@ echo "============== pwd ..."
 pwd
 
 echo "============== Start first container ..."
-# -it for interactive, this will ensure the vm extension in the orchestrator will wait for the script to complete (max runtime for an extension?)
-# -e to pass in a variable. The $myvar will be available in the container 
-# files are downloaded by the vm extension to /var/lib/waagent/custom-script/download/0, this is the pwd when the agent executes the script
-# -v to map the current working directory to /src folder in the container (created in the pwd)
-# /src/sontainerlogic1.sh to run the script from the /src container (mapped from the host, downloaded by the vm extension)
-# the /src/containerlogic1.sh needs to start with #!/bin/bash
-sudo docker run -it -e "APPID=$APPID" -v $(pwd):/src microsoft/azure-cli /src/containerlogic1.sh
+containerid=$(docker run -d -e "APPID=$APPID" -v $(pwd):/src microsoft/azure-cli /src/containerlogic1.sh)
+docker wait $containerid
+docker logs $containerid
 
 
 
