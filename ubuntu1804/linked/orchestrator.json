@@ -1,0 +1,158 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "apiProfile": "2018-03-01-hybrid",
+    "parameters": {
+        "paramObject": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        "names": {
+            "nsg": "[concat(parameters('paramObject').prefix.orchestrator,'-nsg')]",
+            "vNic": "[concat(parameters('paramObject').prefix.orchestrator,'-vNic')]",
+            "pubIp": "[concat(parameters('paramObject').prefix.orchestrator,'-pubIp')]",
+            "pubIpName": "[concat(parameters('paramObject').prefix.orchestrator,'-',uniquestring(resourceGroup().id))]",
+            "vNet": "[concat(parameters('paramObject').prefix.orchestrator,'-vNet')]",
+            "subNet": "[concat(parameters('paramObject').prefix.orchestrator,'-subNet')]",
+            "vm": "[concat(parameters('paramObject').prefix.orchestrator,'-vm')]",
+            "vmConfig": "[concat(parameters('paramObject').prefix.orchestrator,'-vmconfig')]"
+        },
+        "virtualMachineSize": "Standard_D1_v2",
+        "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('names').vNet)]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('names').subNet)]"
+    },
+    "resources": [
+        {
+            "name": "[variables('names').nsg]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "location": "[parameters('paramObject').location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "priority": 300,
+                            "protocol": "Tcp",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "22"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('names').vNic]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[parameters('paramObject').location]",
+            "tags": {},
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', variables('names').pubIp)]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('names').nsg)]"
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/',variables('names').nsg)]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('names').vNet)]",
+                "[concat('Microsoft.Network/publicIpAddresses/', variables('names').pubIp)]"
+            ]
+        },
+        {
+            "name": "[variables('names').vNet]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[parameters('paramObject').location]",
+            "tags": {},
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.10.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('names').subNet]",
+                        "properties": {
+                            "addressPrefix": "10.10.0.0/24"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('names').pubIp]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "location": "[parameters('paramObject').location]",
+            "tags": {},
+            "properties": {
+                "publicIpAllocationMethod": "dynamic"
+            }
+        },
+        {
+            "name": "[variables('names').vm]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[parameters('paramObject').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('names').vNic)]"
+            ],
+            "properties": {
+                "osProfile": {
+                    "computerName": "[variables('names').vm]",
+                    "adminUsername": "[parameters('paramObject').credentials.adminUsername]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('paramObject').credentials.adminUsername, '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('paramObject').credentials.sshPublicKey]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[variables('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "18.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "osdisk",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('names').vNic)]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

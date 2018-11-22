@@ -1,0 +1,40 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "apiProfile": "2018-03-01-hybrid",
+    "parameters": {
+        "paramObject": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        "names": {
+            "vm": "[concat(parameters('paramObject').prefix.orchestrator,'-vm')]"
+        }
+    },
+    "resources": [
+        {
+            "name": "[concat(variables('names').vm,'/config')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "location": "[parameters('paramObject').location]",
+            "dependsOn": [],
+            "properties": {
+              "publisher": "Microsoft.Azure.Extensions",
+              "type": "CustomScript",
+              "typeHandlerVersion": "2.0",
+              "autoUpgradeMinorVersion": true,
+              "settings": {
+                "timestamp":"[parameters('paramObject').triggerId]"
+              },
+              "protectedSettings": {
+                 "commandToExecute": "[concat('/bin/bash bootstrap.sh', ' \"', parameters('paramObject').remote.appId, '\"')]",
+                 "fileUris": [
+                     "[concat(parameters('paramObject').baseUrl,'/scripts/bootstrap.sh')]",
+                     "[concat(parameters('paramObject').baseUrl,'/scripts/containerlogic1.sh')]"
+                    ]  
+              }
+            }
+          }
+    ],
+    "outputs": {}
+}
