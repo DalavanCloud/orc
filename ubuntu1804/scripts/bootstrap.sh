@@ -1,3 +1,4 @@
+echo "============== Update extension ..."
 echo "============== Bootstrap script arguments ..."
 APPID=$1
 echo $APPID
